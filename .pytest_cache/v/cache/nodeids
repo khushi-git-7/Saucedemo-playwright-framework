@@ -1,0 +1,18 @@
+[
+  "tests/test_cart.py::test_add_product_to_cart",
+  "tests/test_cart.py::test_cart_item_visible",
+  "tests/test_cart.py::test_remove_product_from_cart",
+  "tests/test_checkout.py::test_checkout_missing_details",
+  "tests/test_checkout.py::test_complete_checkout",
+  "tests/test_checkout.py::test_order_confirmation_text",
+  "tests/test_inventory.py::test_product_names_exist",
+  "tests/test_inventory.py::test_product_prices_exist",
+  "tests/test_inventory.py::test_products_visible",
+  "tests/test_inventory.py::test_sort_price_high_to_low",
+  "tests/test_inventory.py::test_sort_price_low_to_high",
+  "tests/test_login.py::test_login[data0]",
+  "tests/test_login.py::test_login[data1]",
+  "tests/test_login.py::test_login[data2]",
+  "tests/test_login.py::test_login[data3]",
+  "tests/test_login.py::test_login[data4]"
+]

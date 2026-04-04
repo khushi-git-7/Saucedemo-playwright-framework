@@ -24,6 +24,7 @@ The framework follows **Page Object Model (POM)** and includes **data-driven tes
 
 📂 Project Structure
 
+```
 ecommerce_playwright_framework
 │
 ├── pages
@@ -50,6 +51,7 @@ ecommerce_playwright_framework
 ├── pytest.ini
 ├── requirements.txt
 └── README.md
+```
 
 
 
