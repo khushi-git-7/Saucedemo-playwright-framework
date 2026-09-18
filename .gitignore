@@ -1,7 +1,24 @@
+# Editors / IDE
 .vscode/
+.idea/
+
+# Virtual environments
 venv/
+.venv/
+env/
+
+# Python
 __pycache__/
-*.pyc
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# Local configuration - never commit real credentials
+.env
+
+# Test output: reports and failure artifacts are build output, not source
 reports/
 screenshots/
-.pytest_cache/
+traces/
+videos/
+allure-results/

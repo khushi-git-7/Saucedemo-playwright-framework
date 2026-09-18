@@ -1,4 +1,23 @@
-pytest
-playwright
-pytest-playwright
-pytest-html
+# Core test stack
+pytest==9.0.3
+playwright==1.58.0
+
+# Parallel execution (pytest -n auto)
+pytest-xdist==3.8.0
+
+# HTML reporting
+pytest-html==4.2.0
+pytest-metadata==3.1.1
+
+# API test layer
+requests==2.34.2
+jsonschema==4.26.0
+
+# Configuration via .env files
+python-dotenv==1.2.3
+
+# Optional: Allure reporting. Not installed by default because rendering the
+# results also needs the Allure CLI (a separate, JVM-based tool).
+#   pip install allure-pytest==2.16.0
+#   pytest --alluredir=reports/allure-results
+#   allure serve reports/allure-results
