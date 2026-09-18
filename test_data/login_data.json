@@ -1,26 +1,31 @@
 [
   {
-    "username": "standard_user",
-    "password": "secret_sauce",
+    "id": "valid_credentials",
+    "username": "${STANDARD_USER}",
+    "password": "${PASSWORD}",
     "expected": "success"
   },
   {
-    "username": "standard_user",
+    "id": "wrong_password",
+    "username": "${STANDARD_USER}",
     "password": "wrong_pass",
     "expected": "fail"
   },
   {
-    "username": "locked_out_user",
-    "password": "secret_sauce",
+    "id": "locked_out_user",
+    "username": "${LOCKED_OUT_USER}",
+    "password": "${PASSWORD}",
     "expected": "locked"
   },
   {
+    "id": "empty_username",
     "username": "",
-    "password": "secret_sauce",
+    "password": "${PASSWORD}",
     "expected": "fail"
   },
   {
-    "username": "standard_user",
+    "id": "empty_password",
+    "username": "${STANDARD_USER}",
     "password": "",
     "expected": "fail"
   }

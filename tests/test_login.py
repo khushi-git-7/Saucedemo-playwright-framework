@@ -1,14 +1,25 @@
-import json
 import pytest
+
 from pages.login_page import LoginPage
+from utils.data_loader import load_json
 
 
 def load_test_data():
-    with open("test_data/login_data.json") as f:
-        return json.load(f)
+    """Login scenarios from test_data/login_data.json.
+
+    Credentials in that file are ${PLACEHOLDER} tokens resolved from the
+    environment by utils.data_loader, so no password literal lives in a test.
+    """
+    return load_json("login_data.json")
 
 
-@pytest.mark.parametrize("data", load_test_data())
+LOGIN_DATA = load_test_data()
+
+
+@pytest.mark.ui
+@pytest.mark.smoke
+@pytest.mark.regression
+@pytest.mark.parametrize("data", LOGIN_DATA, ids=[case["id"] for case in LOGIN_DATA])
 def test_login(browser_page, data):
 
     page = browser_page
@@ -24,7 +35,7 @@ def test_login(browser_page, data):
     if expected == "success":
 
         assert "inventory.html" in page.url
-        
+
     elif expected == "locked":
 
         error = login_page.get_error_message()
@@ -39,4 +50,3 @@ def test_login(browser_page, data):
 
         assert "required" in error.lower() or "username and password do not match" in error.lower(), \
             f"Unexpected error message: {error}"
-

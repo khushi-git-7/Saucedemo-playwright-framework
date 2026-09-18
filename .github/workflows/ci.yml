@@ -1,0 +1,104 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Nightly regression run at 02:00 UTC
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+
+# A new push to the same branch cancels the previous run.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: "3.12"
+  # Headless everywhere in CI.
+  HEADED: "0"
+  SLOW_MO: "0"
+
+jobs:
+  api-tests:
+    name: API tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run API contract tests
+        run: python -m pytest api -n auto --html=reports/api-report.html --self-contained-html
+
+      - name: Upload API report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-report
+          path: reports/
+          if-no-files-found: ignore
+          retention-days: 14
+
+  ui-tests:
+    name: UI tests (${{ matrix.browser }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        # Pull requests and pushes run chromium only; the nightly run widens
+        # the matrix to catch engine-specific regressions.
+        browser: ${{ github.event_name == 'schedule' && fromJSON('["chromium", "firefox"]') || fromJSON('["chromium"]') }}
+    env:
+      BROWSER: ${{ matrix.browser }}
+      BASE_URL: https://www.saucedemo.com/
+      # Demo credentials; override them with repository secrets if the target
+      # environment ever stops being a public demo.
+      SAUCE_USERNAME: ${{ secrets.SAUCE_USERNAME || 'standard_user' }}
+      SAUCE_PASSWORD: ${{ secrets.SAUCE_PASSWORD || 'secret_sauce' }}
+      TRACE: retain-on-failure
+      VIDEO: retain-on-failure
+      SCREENSHOT: retain-on-failure
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Install Playwright browser (${{ matrix.browser }})
+        run: python -m playwright install --with-deps ${{ matrix.browser }}
+
+      - name: Run UI suite in parallel
+        run: python -m pytest tests -n auto --html=reports/report-${{ matrix.browser }}.html --self-contained-html
+
+      - name: Upload HTML report and failure artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-artifacts-${{ matrix.browser }}
+          path: |
+            reports/
+            traces/
+            screenshots/
+            videos/
+          if-no-files-found: ignore
+          retention-days: 14

@@ -1,14 +1,22 @@
+import pytest
+
 from pages.login_page import LoginPage
 from pages.inventory_page import InventoryPage
+from utils.config import Config
+
+pytestmark = pytest.mark.ui
+
 
 #to test if product loads and is visible on the inventory page after login
+@pytest.mark.smoke
+@pytest.mark.regression
 def test_products_visible(browser_page):
 
     page = browser_page
 
     login_page = LoginPage(page)
 
-    login_page.login("standard_user", "secret_sauce")
+    login_page.login(Config.STANDARD_USER, Config.PASSWORD)
 
     inventory_page = InventoryPage(page)
 
@@ -18,13 +26,14 @@ def test_products_visible(browser_page):
 
 
 #to test if product names are not empty on the inventory page after login
+@pytest.mark.regression
 def test_product_names_exist(browser_page):
 
     page = browser_page
 
     login_page = LoginPage(page)
 
-    login_page.login("standard_user", "secret_sauce")
+    login_page.login(Config.STANDARD_USER, Config.PASSWORD)
 
     inventory_page = InventoryPage(page)
 
@@ -33,16 +42,17 @@ def test_product_names_exist(browser_page):
     for name in names:
 
         assert len(name.strip()) > 0, "Product name is empty on inventory page"
-        
-        
+
+
 #to test if product prices are visible and greater than 0 on the inventory page after login
+@pytest.mark.regression
 def test_product_prices_exist(browser_page):
 
     page = browser_page
 
     login_page = LoginPage(page)
 
-    login_page.login("standard_user", "secret_sauce")
+    login_page.login(Config.STANDARD_USER, Config.PASSWORD)
 
     inventory_page = InventoryPage(page)
 
@@ -51,16 +61,17 @@ def test_product_prices_exist(browser_page):
     for price in prices:
 
         assert price > 0, f"Invalid price found: {price}"
-        
-#to test if sorting products by price low to high works correctly on the inventory page
 
+
+#to test if sorting products by price low to high works correctly on the inventory page
+@pytest.mark.regression
 def test_sort_price_low_to_high(browser_page):
 
     page = browser_page
 
     login_page = LoginPage(page)
 
-    login_page.login("standard_user", "secret_sauce")
+    login_page.login(Config.STANDARD_USER, Config.PASSWORD)
 
     inventory_page = InventoryPage(page)
 
@@ -71,16 +82,17 @@ def test_sort_price_low_to_high(browser_page):
     sorted_prices = sorted(prices)
 
     assert prices == sorted_prices, "Products are not sorted by price low to high correctly on inventory page"
-    
-#to test if sorting products by price high to low works correctly on the inventory page
 
+
+#to test if sorting products by price high to low works correctly on the inventory page
+@pytest.mark.regression
 def test_sort_price_high_to_low(browser_page):
 
     page = browser_page
 
     login_page = LoginPage(page)
 
-    login_page.login("standard_user", "secret_sauce")
+    login_page.login(Config.STANDARD_USER, Config.PASSWORD)
 
     inventory_page = InventoryPage(page)
 
@@ -91,4 +103,3 @@ def test_sort_price_high_to_low(browser_page):
     sorted_prices = sorted(prices, reverse=True)
 
     assert prices == sorted_prices, "Products are not sorted by price high to low correctly on inventory page"
-
