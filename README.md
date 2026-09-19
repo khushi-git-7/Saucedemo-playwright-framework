@@ -1,9 +1,10 @@
-# SauceDemo Test Automation Framework
+# TestVerse
 
 [![CI](https://github.com/khushi-git-7/Saucedemo-playwright-framework/actions/workflows/ci.yml/badge.svg)](https://github.com/khushi-git-7/Saucedemo-playwright-framework/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
 [![Playwright](https://img.shields.io/badge/playwright-1.58-45ba4b.svg)](https://playwright.dev/python/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-lightgrey.svg)](#license)
+[![Dashboard](https://img.shields.io/badge/live-dashboard-2b6cb0.svg)](https://khushi-git-7.github.io/Saucedemo-playwright-framework/)
 
 A UI and API test automation framework for [saucedemo.com](https://www.saucedemo.com/),
 built with **Playwright (sync API) + Pytest**.
@@ -26,6 +27,60 @@ response-time assertions and negative cases against
 [jsonplaceholder.typicode.com](https://jsonplaceholder.typicode.com).
 
 ---
+
+## Dashboard
+
+Every pytest run leaves a JSON record under `reports/history/`. The dashboard
+turns that history into a single self-contained analytics page, published by CI
+to GitHub Pages after every push to `main`:
+
+**Live:** https://khushi-git-7.github.io/Saucedemo-playwright-framework/
+
+![Dashboard overview: KPI tiles, insights, trends and breakdowns](docs/dashboard-overview.png)
+
+| Panel | What it shows |
+|---|---|
+| **Overview** | Pass rate, total tests, failures, flaky count, median test duration and suite time for the latest run, each with its delta against the previous run and a sparkline across history. |
+| **Insights** | Findings computed from the history, in plain English, with the rule shown on hover: a pass-rate drop and the tests that caused it, tests that flip between passing and failing (flaky) versus tests that fail consistently (a real regression), p95 duration jumps per layer, and suite slow-downs. |
+| **Trends** | Pass rate and suite time over runs; stacked outcomes per run. Every chart has a table view. |
+| **Breakdown** | Pass rate by marker (smoke, regression, e2e, ui, api) and by page area; the slowest tests with p50 / p95 / max across history. |
+| **Flakiness** | Tests whose outcome changed within the recent window, with a flip count and a pass/fail strip timeline per test. |
+| **Failures** | The latest run's failures with phase, message and links to the screenshot, trace and video that were captured. |
+| **Runs** | Every recorded run: timestamp, commit, browser, workers, pass rate, duration. |
+
+How flakiness is decided: a test is flaky when its outcome flipped at least
+twice within the last 10 runs it appeared in. A test that has failed in three or
+more consecutive runs is reported as a regression instead, because a steady
+failure is not flakiness.
+
+Build it locally from your own runs:
+
+```bash
+python -m pytest -m smoke                 # records reports/history/<run>.json
+python -m pytest -m smoke                 # a second run gives the deltas something to compare
+python -m utils.dashboard                 # -> reports/dashboard.html
+```
+
+Or from generated sample data to see every panel populated:
+
+```bash
+python -m utils.dashboard.demo --runs 12
+python -m utils.dashboard --history reports/history-demo
+```
+
+Constraints, all deliberate: one HTML file, inline SVG charts generated in Python,
+no external scripts, styles or fonts, light and dark themes, no new runtime
+dependency. It opens from disk, from a CI artifact, or from GitHub Pages.
+
+The recorder is `utils/results_plugin.py` (registered in the root `conftest.py`).
+`TESTVERSE_RESULTS=0` disables it for a run; `TESTVERSE_HISTORY_DIR` moves the
+output. In CI the UI and API jobs each write a shard tagged with the workflow's
+run id, and the dashboard job merges them into one run.
+
+**One-time setup for the live page:** the `dashboard` job publishes to a
+`gh-pages` branch. After the first successful run on `main`, open
+Settings → Pages and confirm the source is *Deploy from a branch: gh-pages*
+(GitHub usually selects this automatically when the branch appears).
 
 ## Architecture
 
@@ -200,6 +255,10 @@ for a different release.
 
 ## Continuous integration
 
+Three jobs: `api-tests` and `ui-tests` run on every push and pull request, and
+`dashboard` runs after them on pushes to `main` to rebuild and publish the
+analytics page (see [Dashboard](#dashboard)).
+
 [`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs on every push to
 `main`, on every pull request, nightly at 02:00 UTC, and on demand
 (`workflow_dispatch`):
@@ -281,9 +340,13 @@ Saucedemo-playwright-framework
 │
 ├── utils/
 │   ├── config.py             # environment-driven settings
-│   └── data_loader.py        # test data loading + placeholder resolution
+│   ├── data_loader.py        # test data loading + placeholder resolution
+│   ├── results_plugin.py     # records every run to reports/history/
+│   └── dashboard/            # analytics page: loader, metrics, insights, charts, render
 │
-├── .github/workflows/ci.yml  # CI pipeline
+├── tests_framework/          # unit tests for the recorder and dashboard (synthetic data)
+├── conftest.py               # registers the results recorder for every layer
+├── .github/workflows/ci.yml  # CI pipeline: api-tests, ui-tests, dashboard (Pages)
 ├── Dockerfile
 ├── .env.example
 ├── pytest.ini                # markers, testpaths, addopts
