@@ -34,7 +34,10 @@ Every pytest run leaves a JSON record under `reports/history/`. The dashboard
 turns that history into a single self-contained analytics page, published by CI
 to GitHub Pages after every push to `main`:
 
-**Live:** https://khushi-git-7.github.io/Saucedemo-playwright-framework/
+**Live:** https://khushi-git-7.github.io/Saucedemo-playwright-framework/ - the
+landing page, with the dashboard at
+[/dashboard.html](https://khushi-git-7.github.io/Saucedemo-playwright-framework/dashboard.html)
+and the latest UI report at `/report.html`.
 
 ![Dashboard overview: KPI tiles, insights, trends and breakdowns](docs/dashboard-overview.png)
 
@@ -85,6 +88,27 @@ application suite:
 ```bash
 python -m pytest tests_framework -q
 ```
+
+### Site
+
+The page at the root of the GitHub Pages site is a landing page: what the
+framework is, a stats strip with the latest run's numbers (tests, pass rate,
+failures, median test duration, runs recorded, green streak), the three layers,
+how a failure travels from a red test to an insight, and the commands to run
+it. It reads the same history the dashboard reads, through the same loader, so
+the numbers cannot disagree. Presentation only: nothing in `utils/site/` is
+imported by the tests or the dashboard.
+
+```bash
+python -m utils.dashboard.demo --runs 12
+python -m utils.dashboard --history reports/history-demo --out site/dashboard.html --home index.html
+python -m utils.site      --history reports/history-demo --out site/index.html
+```
+
+`--dashboard` and `--report` name the sibling pages; each is linked only when
+the file exists next to the landing page, so a first deploy has no dead links.
+`tests_framework/test_site.py` covers the empty state, the stats, escaping and
+the CLI.
 
 **One-time setup for the live page:** the `dashboard` job publishes to a
 `gh-pages` branch. After the first successful run on `main`, open
@@ -352,7 +376,8 @@ Saucedemo-playwright-framework
 │   ├── config.py             # environment-driven settings
 │   ├── data_loader.py        # test data loading + placeholder resolution
 │   ├── results_plugin.py     # records every run to reports/history/
-│   └── dashboard/            # analytics page: loader, metrics, insights, charts, render
+│   ├── dashboard/            # analytics page: loader, metrics, insights, charts, render
+│   └── site/                 # landing page in front of the dashboard on GitHub Pages
 │
 ├── tests_framework/          # unit tests for the recorder and dashboard (synthetic data)
 ├── conftest.py               # registers the results recorder for every layer

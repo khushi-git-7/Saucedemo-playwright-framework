@@ -165,14 +165,17 @@ jobs:
           api_report=$(find artifacts -name 'api-report.html' | head -n 1)
           if [ -n "$api_report" ]; then cp "$api_report" site/api-report.html; fi
 
-      - name: Build the dashboard
-        # Artifacts were copied next to the page, so links are relative to it.
-        # Report links are added only for reports this run actually produced.
+      - name: Build the dashboard and the landing page
+        # Artifacts were copied next to the pages, so links are relative to
+        # them. Report links are added only for reports this run produced.
+        # index.html is the landing page; the dashboard sits at dashboard.html
+        # and links back home from its sidebar.
         run: |
           links=()
           if [ -f site/report.html ]; then links+=(--link "UI report=report.html"); fi
           if [ -f site/api-report.html ]; then links+=(--link "API report=api-report.html"); fi
-          python -m utils.dashboard             --history reports/history             --out site/index.html             --max-runs 200             --artifact-base .             "${links[@]}"
+          python -m utils.dashboard             --history reports/history             --out site/dashboard.html             --home index.html             --max-runs 200             --artifact-base .             "${links[@]}"
+          python -m utils.site             --history reports/history             --out site/index.html
           # Keep the store bounded: the newest 400 shard files (~200 runs of
           # two jobs). File names start with the run's UTC timestamp, so a
           # name sort is a time sort; mtimes here are all "now".
@@ -186,6 +189,6 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./site
           force_orphan: true
-          commit_message: "Publish dashboard for ${{ github.sha }}"
+          commit_message: "Publish site and dashboard for ${{ github.sha }}"
           user_name: "github-actions[bot]"
           user_email: "41898282+github-actions[bot]@users.noreply.github.com"

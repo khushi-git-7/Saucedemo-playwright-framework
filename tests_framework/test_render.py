@@ -171,3 +171,32 @@ def test_flakiness_timeline_marks_runs_where_the_test_did_not_run():
     page = render.render_dashboard(runs)
 
     assert page.count('class="c-absent"') == 1
+
+
+# ---------------------------------------------------------------------------
+# the Home link back to the landing page
+# ---------------------------------------------------------------------------
+def test_home_link_is_rendered_only_when_asked_for_and_outside_the_nav():
+    run = shard("r1", [make_record("tests/test_a.py::test_x")])
+
+    without = render.render_dashboard([run])
+    with_home = render.render_dashboard([run], home="index.html")
+    empty_with_home = render.render_dashboard([], home="../index.html")
+
+    assert 'class="home"' not in without
+    for page in (with_home, empty_with_home):
+        assert check_html(page).problems == []
+        assert page.count('class="home"') == 1
+        # the scroll-spy script queries every .nav href as an in-page anchor
+        assert re.search(r'<a class="home" href="[^"]+">.*?</a>\s*<nav class="nav">', page, re.S)
+    assert '<a class="home" href="index.html">' in with_home
+    assert '<a class="home" href="../index.html">' in empty_with_home
+
+
+def test_cli_home_option_reaches_the_page(tmp_path):
+    write_history(tmp_path, runs=1)
+    out = tmp_path / "site" / "dashboard.html"
+
+    assert cli.main(["--history", str(tmp_path), "--out", str(out), "--artifact-base", ".", "--home", "index.html"]) == 0
+
+    assert '<a class="home" href="index.html">' in out.read_text(encoding="utf-8")
