@@ -11,7 +11,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-OUTCOMES = ("passed", "failed", "error", "skipped")
+from utils.dashboard.metrics import OUTCOMES
 
 
 def load_shards(history_dir: Path) -> list:
@@ -121,6 +121,7 @@ def merge_runs(shards: list) -> list:
 
 
 def load_runs(history_dir: Path, max_runs: int = 0) -> list:
+    """Merged runs from a history folder, oldest first; the newest *max_runs* when > 0."""
     runs = merge_runs(load_shards(history_dir))
     if max_runs and len(runs) > max_runs:
         runs = runs[-max_runs:]

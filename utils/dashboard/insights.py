@@ -42,6 +42,10 @@ def _join(names: list, limit: int = 3) -> str:
 
 
 def compute_insights(runs: list, flaky_rows: list = None) -> list:
+    """Insights for the latest run, most important first; never empty.
+
+    *flaky_rows* is ``metrics.flakiness(runs)`` when the caller already has it.
+    """
     if not runs:
         return [
             {
@@ -133,7 +137,7 @@ def compute_insights(runs: list, flaky_rows: list = None) -> list:
     # 7. stability streak
     streak = metrics.green_streak(runs)
     if streak >= 2:
-        insights.append({"kind": "streak", "severity": "good", "text": f"All tests have passed in the last {streak} consecutive runs.", "rule": "Counts the latest runs, newest first, with zero failed or errored tests."})
+        insights.append({"kind": "streak", "severity": "good", "text": f"No test has failed in the last {streak} consecutive runs.", "rule": "Counts the latest runs, newest first, with zero failed or errored tests. Skipped tests do not break the streak."})
     elif stats["failed"] + stats["error"] == 0 and stats["total"] > 0 and len(runs) == 1:
         insights.append({"kind": "streak", "severity": "good", "text": "The only recorded run passed cleanly.", "rule": "The latest run has zero failed or errored tests."})
 

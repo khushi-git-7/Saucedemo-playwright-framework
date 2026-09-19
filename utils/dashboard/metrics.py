@@ -19,6 +19,7 @@ from statistics import median
 
 FLAKY_WINDOW = 10
 FLAKY_MIN_FLIPS = 2
+OUTCOMES = ("passed", "failed", "error", "skipped")
 FAILING = ("failed", "error")
 
 
@@ -79,11 +80,8 @@ def run_stats(run: dict) -> dict:
     }
 
 
-def series(runs: list, key: str) -> list:
-    return [run_stats(run)[key] for run in runs]
-
-
 def delta(current, previous):
+    """current - previous, or None when either side has no value."""
     if current is None or previous is None:
         return None
     return current - previous
@@ -186,7 +184,7 @@ def breakdown(run: dict, by: str, order: list = None) -> list:
             group = groups.setdefault(key, {"name": key, "total": 0, "passed": 0, "failed": 0, "error": 0, "skipped": 0})
             group["total"] += 1
             outcome = test.get("outcome", "error")
-            group[outcome if outcome in group else "error"] += 1
+            group[outcome if outcome in OUTCOMES else "error"] += 1
     rows = list(groups.values())
     for row in rows:
         row["pass_rate"] = pass_rate(row)
@@ -199,11 +197,13 @@ def breakdown(run: dict, by: str, order: list = None) -> list:
 
 
 def layer_p95(run: dict, layer: str):
+    """p95 of test durations for one layer of a run; None when the layer is absent."""
     durations = [float(t.get("duration") or 0.0) for t in run.get("tests", []) if t.get("layer") == layer]
     return percentile(durations, 95)
 
 
 def failures(run: dict) -> list:
+    """Tests of a run whose outcome is failed or error, in run order."""
     return [t for t in run.get("tests", []) if _is_fail(t.get("outcome", ""))]
 
 

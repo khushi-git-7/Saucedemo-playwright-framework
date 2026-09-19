@@ -16,6 +16,8 @@ import random
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+from utils.results_plugin import classify_area, classify_layer
+
 UI_TESTS = [
     ("tests/test_login.py::test_login[valid_credentials]", ["ui", "smoke", "regression"], 2.1),
     ("tests/test_login.py::test_login[locked_out_user]", ["ui", "smoke", "regression"], 1.7),
@@ -45,15 +47,12 @@ SPIKE = "api/test_posts_api.py::test_get_post_response_time"
 
 def _record(nodeid: str, markers: list, outcome: str, duration: float, index: int) -> dict:
     module = nodeid.split("::", 1)[0]
-    layer = "api" if "api" in markers else "ui"
-    stem = module.rsplit("/", 1)[-1][:-3]
-    area = stem[5:] if stem.startswith("test_") else stem
-    area = area[:-4] if area.endswith("_api") else area
+    layer = classify_layer(nodeid, markers)
     record = {
         "nodeid": nodeid,
         "name": nodeid.rsplit("::", 1)[-1],
         "module": module,
-        "area": area,
+        "area": classify_area(nodeid),
         "layer": layer,
         "markers": markers,
         "outcome": outcome,
