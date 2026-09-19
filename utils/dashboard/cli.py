@@ -14,7 +14,8 @@ from utils.dashboard.render import render_dashboard
 DEFAULT_REPO_URL = "https://github.com/khushi-git-7/Saucedemo-playwright-framework"
 
 
-def _repo_url() -> str:
+def default_repo_url() -> str:
+    """The repository URL from the CI environment, else the project's."""
     repo = os.getenv("GITHUB_REPOSITORY", "").strip()
     if repo:
         server = os.getenv("GITHUB_SERVER_URL", "https://github.com").rstrip("/")
@@ -60,17 +61,18 @@ def parse_links(values: list, out: Path) -> list:
     return links
 
 
-def build(history: Path, out: Path, max_runs: int = 0, repo_url: str = "", links: list = None, artifact_base: str = None) -> dict:
+def build(history: Path, out: Path, max_runs: int = 0, repo_url: str = "", links: list = None, artifact_base: str = None, home: str = "") -> dict:
     """Renders the history folder to *out* and returns a small summary dict.
 
     *artifact_base* is the href prefix for failure artifacts, relative to the
     page; None means "the repo root, relative to out" and "." means "next to
     the page". Files that are not found under that base are not linked.
+    *home* is the href of a page to link back to from the sidebar, if any.
     """
     runs = load_runs(history, max_runs=max_runs)
     base = _default_artifact_base(out) if artifact_base is None else artifact_base
     base = "" if base in (".", "./") else base
-    html_text = render_dashboard(runs, repo_url=repo_url or _repo_url(), links=links or [], artifact_base=base, artifact_root=_artifact_root(out, base))
+    html_text = render_dashboard(runs, repo_url=repo_url or default_repo_url(), links=links or [], artifact_base=base, artifact_root=_artifact_root(out, base), home=home)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(html_text, encoding="utf-8")
     return {"runs": len(runs), "bytes": len(html_text.encode("utf-8")), "out": str(out)}
@@ -85,11 +87,12 @@ def main(argv: list = None) -> int:
     parser.add_argument("--repo-url", default="", help="repository URL used for commit links (default: from GITHUB_REPOSITORY or the project repo)")
     parser.add_argument("--link", action="append", default=[], metavar="LABEL=HREF", help="extra sidebar link, e.g. 'UI report=report.html' (repeatable)")
     parser.add_argument("--artifact-base", default=None, help="prefix for artifact links, '.' for files next to the page (default: relative path from --out to the repo root)")
+    parser.add_argument("--home", default="", metavar="HREF", help="page to link back to from the sidebar, e.g. index.html (default: none)")
     args = parser.parse_args(argv)
 
     history = Path(args.history)
     out = Path(args.out)
-    result = build(history, out, max_runs=args.max_runs, repo_url=args.repo_url, links=parse_links(args.link, out), artifact_base=args.artifact_base)
+    result = build(history, out, max_runs=args.max_runs, repo_url=args.repo_url, links=parse_links(args.link, out), artifact_base=args.artifact_base, home=args.home)
     print(f"Dashboard written to {result['out']} ({result['runs']} runs, {result['bytes'] / 1024:.0f} KB)")
     if not history.exists():
         print(f"note: history folder {history} does not exist yet; run pytest first", file=sys.stderr)

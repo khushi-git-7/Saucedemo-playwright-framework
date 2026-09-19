@@ -422,6 +422,9 @@ a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
 .nav a:hover{background:var(--surface-2);text-decoration:none;color:var(--text)}
 .nav a.active{background:var(--accent-wash);color:var(--text)}
 .nav a .k{width:6px;height:6px;border-radius:50%;background:var(--axis)}.nav a.active .k{background:var(--accent)}
+.home{display:flex;align-items:center;gap:8px;margin:0 0 8px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;color:var(--text-2);font-weight:500}
+.home:hover{background:var(--surface-2);text-decoration:none;color:var(--text)}
+.home .k{width:0;height:0;border:4px solid transparent;border-right:6px solid var(--axis);border-left:0}
 .side-foot{margin-top:auto;padding:8px 10px;font-size:11px;color:var(--muted);display:grid;gap:4px}
 .side-foot a{display:block}
 main{padding:0 28px 48px;min-width:0}
@@ -521,6 +524,7 @@ tr.run-row[aria-expanded="true"] td{background:var(--accent-wash)}
 .app{grid-template-columns:1fr}
 .sidebar{position:static;height:auto;border-right:none;border-bottom:1px solid var(--border);padding:10px 16px}
 .nav{display:flex;flex-wrap:wrap;gap:2px}.nav a{padding:5px 8px}.side-foot{display:none}
+.home{display:inline-flex;margin:0 0 6px;padding:5px 8px}
 main{padding:0 16px 32px}.topbar{position:static}
 .grid.two{grid-template-columns:1fr}
 }
@@ -596,19 +600,26 @@ NAV = [
 ]
 
 
-def render_empty(repo_url: str, links: list) -> str:
+def render_empty(repo_url: str, links: list, home: str = "") -> str:
     """The page shown when the history folder has no run files."""
     body = (
         '<section id="overview"><h2>Overview</h2><div class="card"><p class="empty">No run history found. '
         "Run <code>python -m pytest</code> once (it writes reports/history/&lt;run&gt;.json) and rebuild with "
         "<code>python -m utils.dashboard</code>.</p></div></section>"
     )
-    return page(body, repo_url, links, meta="No runs recorded yet", runs=[])
+    return page(body, repo_url, links, meta="No runs recorded yet", runs=[], home=home)
 
 
-def page(body: str, repo_url: str, links: list, meta: str, runs: list) -> str:
-    """Wraps rendered sections in the document shell: sidebar, styles, script."""
+def page(body: str, repo_url: str, links: list, meta: str, runs: list, home: str = "") -> str:
+    """Wraps rendered sections in the document shell: sidebar, styles, script.
+
+    *home* is the href of the page that embeds this dashboard (the landing
+    page on GitHub Pages); when given, a Home link is rendered above the
+    section navigation. It sits outside ``.nav`` on purpose: the nav's
+    scroll-spy script treats every nav href as an in-page anchor.
+    """
     nav = "".join(f'<a href="#{key}"><span class="k"></span>{label}</a>' for key, label in NAV)
+    home_html = f'<a class="home" href="{esc(home)}"><span class="k"></span>Home</a>\n' if home else ""
     link_html = "".join(f'<a href="{esc(href)}">{esc(label)}</a>' for label, href in links)
     built = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     return (
@@ -619,7 +630,7 @@ def page(body: str, repo_url: str, links: list, meta: str, runs: list) -> str:
         f"<style>{CSS}</style>\n</head>\n<body>\n"
         '<div class="app">\n<aside class="sidebar">\n'
         '<div class="brand"><div class="logo">T</div><div><b>TestVerse</b><span>Test analytics</span></div></div>\n'
-        f'<nav class="nav">{nav}</nav>\n'
+        f'{home_html}<nav class="nav">{nav}</nav>\n'
         f'<div class="side-foot">{link_html}<a href="{esc(repo_url)}">Source on GitHub</a><span>Built {built}</span></div>\n'
         "</aside>\n<main>\n"
         f'<header class="topbar"><h1>Test results</h1><div class="meta">{meta}</div><div class="spacer"></div>'
@@ -631,11 +642,11 @@ def page(body: str, repo_url: str, links: list, meta: str, runs: list) -> str:
     )
 
 
-def render_dashboard(runs: list, repo_url: str = "", links: list = None, artifact_base: str = "", artifact_root=None) -> str:
-    """The complete page. See render_failures for artifact_base / artifact_root."""
+def render_dashboard(runs: list, repo_url: str = "", links: list = None, artifact_base: str = "", artifact_root=None, home: str = "") -> str:
+    """The complete page. See render_failures for artifact_base / artifact_root and page for home."""
     links = links or []
     if not runs:
-        return render_empty(repo_url, links)
+        return render_empty(repo_url, links, home)
 
     latest = runs[-1]
     flaky_rows = metrics.flakiness(runs)
@@ -664,4 +675,4 @@ def render_dashboard(runs: list, repo_url: str = "", links: list = None, artifac
             section("runs", "Runs", "every recorded run; click one for its tests", render_runs(runs, repo_url)),
         ]
     )
-    return page(body, repo_url, links, meta, runs)
+    return page(body, repo_url, links, meta, runs, home)
