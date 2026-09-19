@@ -11,6 +11,7 @@ class CartPage:
         self.cart_badge = ".shopping_cart_badge"
         self.cart_icon = ".shopping_cart_link"
         self.cart_items = ".cart_item"
+        self.cart_list = ".cart_list"
 
     def add_first_product(self):
 
@@ -35,6 +36,8 @@ class CartPage:
 
     def get_cart_items(self):
 
-        items = self.page.locator(self.cart_items).all()
+        # The cart page must have rendered before its rows are counted;
+        # waiting on the list container (not a row) keeps an empty cart valid.
+        self.page.locator(self.cart_list).wait_for(state="visible")
 
-        return len(items)
+        return self.page.locator(self.cart_items).count()

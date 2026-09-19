@@ -11,30 +11,29 @@ class InventoryPage:
         self.product_prices = ".inventory_item_price"
         self.sort_dropdown = ".product_sort_container"
 
+    def _wait_for_products(self, selector):
+        """Wait until the product list has rendered before reading it.
+
+        `Locator.all()` deliberately does not auto-wait: it snapshots whatever
+        is in the DOM at that instant, which right after login can be nothing.
+        Waiting for the first item to be visible makes every read below
+        deterministic.
+        """
+        locator = self.page.locator(selector)
+        locator.first.wait_for(state="visible")
+        return locator
+
     def get_product_names(self):
 
-        elements = self.page.locator(self.product_names).all()
-
-        names = []
-
-        for element in elements:
-            names.append(element.inner_text())
-
-        return names
+        return self._wait_for_products(self.product_names).all_inner_texts()
 
     def get_product_prices(self):
 
-        elements = self.page.locator(self.product_prices).all()
-
         prices = []
 
-        for element in elements:
+        for price_text in self._wait_for_products(self.product_prices).all_inner_texts():
 
-            price_text = element.inner_text()
-
-            price = float(price_text.replace("$", ""))
-
-            prices.append(price)
+            prices.append(float(price_text.replace("$", "")))
 
         return prices
 
