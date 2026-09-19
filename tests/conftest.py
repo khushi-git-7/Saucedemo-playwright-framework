@@ -74,7 +74,7 @@ def _should_keep(mode: str, failed: bool) -> bool:
 
 
 def _record(item, path) -> None:
-    """Remembers an artifact so the HTML report can link to it."""
+    """Remembers an artifact so the HTML report and the run record can link to it."""
     if not hasattr(item, "_artifacts"):
         item._artifacts = []
     item._artifacts.append(str(path))

@@ -102,3 +102,90 @@ jobs:
             videos/
           if-no-files-found: ignore
           retention-days: 14
+
+  dashboard:
+    name: Dashboard (GitHub Pages)
+    # Builds the analytics dashboard from this run's results plus the history
+    # already published on the gh-pages branch, then publishes both. Runs even
+    # when tests failed: a red run is exactly what the dashboard is for.
+    # Only main publishes, so a manual run of a feature branch cannot rewrite
+    # the live page.
+    needs: [api-tests, ui-tests]
+    if: always() && github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    concurrency:
+      group: gh-pages-${{ github.repository }}
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Restore published history
+        # The gh-pages branch is the store: history/*.json accumulates one
+        # file per CI job across runs. Only the history is carried over; the
+        # page, the reports and the failure artifacts are rebuilt from this
+        # run. On the very first run the branch does not exist yet.
+        run: |
+          mkdir -p reports/history
+          if git fetch --depth=1 origin gh-pages 2>/dev/null; then
+            mkdir -p published
+            git archive --format=tar FETCH_HEAD | tar -x -C published
+            cp published/history/*.json reports/history/ 2>/dev/null || true
+          else
+            echo "no gh-pages branch yet: starting a fresh history"
+          fi
+          echo "restored $(ls reports/history | wc -l) history file(s)"
+
+      - name: Download this run's results
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Collect result shards, reports and failure artifacts
+        # upload-artifact keeps the UI job's paths (reports/, traces/,
+        # screenshots/ and videos/ share the repo root as their common
+        # ancestor) but flattens the API job's single reports/ folder, hence
+        # find rather than fixed paths.
+        run: |
+          mkdir -p artifacts site
+          find artifacts -path '*/history/*.json' -exec cp {} reports/history/ \;
+          echo "history now has $(ls reports/history | wc -l) file(s)"
+          for dir in $(find artifacts -type d \( -name screenshots -o -name traces -o -name videos \)); do
+            mkdir -p "site/$(basename "$dir")"
+            cp -r "$dir"/. "site/$(basename "$dir")/"
+          done
+          ui_report=$(find artifacts -name 'report-chromium.html' | head -n 1)
+          if [ -n "$ui_report" ]; then cp "$ui_report" site/report.html; fi
+          api_report=$(find artifacts -name 'api-report.html' | head -n 1)
+          if [ -n "$api_report" ]; then cp "$api_report" site/api-report.html; fi
+
+      - name: Build the dashboard
+        # Artifacts were copied next to the page, so links are relative to it.
+        # Report links are added only for reports this run actually produced.
+        run: |
+          links=()
+          if [ -f site/report.html ]; then links+=(--link "UI report=report.html"); fi
+          if [ -f site/api-report.html ]; then links+=(--link "API report=api-report.html"); fi
+          python -m utils.dashboard             --history reports/history             --out site/index.html             --max-runs 200             --artifact-base .             "${links[@]}"
+          # Keep the store bounded: the newest 400 shard files (~200 runs of
+          # two jobs). File names start with the run's UTC timestamp, so a
+          # name sort is a time sort; mtimes here are all "now".
+          mkdir -p site/history
+          ls reports/history/*.json 2>/dev/null | sort -r | head -n 400 | xargs -I{} cp {} site/history/
+          touch site/.nojekyll
+
+      - name: Publish to gh-pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./site
+          force_orphan: true
+          commit_message: "Publish dashboard for ${{ github.sha }}"
+          user_name: "github-actions[bot]"
+          user_email: "41898282+github-actions[bot]@users.noreply.github.com"
