@@ -108,8 +108,10 @@ jobs:
     # Builds the analytics dashboard from this run's results plus the history
     # already published on the gh-pages branch, then publishes both. Runs even
     # when tests failed: a red run is exactly what the dashboard is for.
+    # Only main publishes, so a manual run of a feature branch cannot rewrite
+    # the live page.
     needs: [api-tests, ui-tests]
-    if: always() && github.event_name != 'pull_request'
+    if: always() && github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -125,14 +127,18 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Restore published history
-        # The gh-pages branch is the store: site/history/*.json accumulates
-        # one file per CI job across runs. First run: the branch does not
-        # exist yet and this step is a no-op.
+        # The gh-pages branch is the store: history/*.json accumulates one
+        # file per CI job across runs. Only the history is carried over; the
+        # page, the reports and the failure artifacts are rebuilt from this
+        # run. On the very first run the branch does not exist yet.
         run: |
-          mkdir -p reports/history site
+          mkdir -p reports/history
           if git fetch --depth=1 origin gh-pages 2>/dev/null; then
-            git --work-tree=site checkout origin/gh-pages -- . 2>/dev/null || true
-            cp site/history/*.json reports/history/ 2>/dev/null || true
+            mkdir -p published
+            git archive --format=tar FETCH_HEAD | tar -x -C published
+            cp published/history/*.json reports/history/ 2>/dev/null || true
+          else
+            echo "no gh-pages branch yet: starting a fresh history"
           fi
           echo "restored $(ls reports/history | wc -l) history file(s)"
 
@@ -141,29 +147,37 @@ jobs:
         with:
           path: artifacts
 
-      - name: Collect result shards and the latest UI report
+      - name: Collect result shards, reports and failure artifacts
+        # upload-artifact keeps the UI job's paths (reports/, traces/,
+        # screenshots/ and videos/ share the repo root as their common
+        # ancestor) but flattens the API job's single reports/ folder, hence
+        # find rather than fixed paths.
         run: |
+          mkdir -p artifacts site
           find artifacts -path '*/history/*.json' -exec cp {} reports/history/ \;
           echo "history now has $(ls reports/history | wc -l) file(s)"
-          latest_report=$(find artifacts -name 'report-chromium.html' | head -n 1)
-          if [ -n "$latest_report" ]; then cp "$latest_report" site/report.html; fi
+          for dir in $(find artifacts -type d \( -name screenshots -o -name traces -o -name videos \)); do
+            mkdir -p "site/$(basename "$dir")"
+            cp -r "$dir"/. "site/$(basename "$dir")/"
+          done
+          ui_report=$(find artifacts -name 'report-chromium.html' | head -n 1)
+          if [ -n "$ui_report" ]; then cp "$ui_report" site/report.html; fi
           api_report=$(find artifacts -name 'api-report.html' | head -n 1)
           if [ -n "$api_report" ]; then cp "$api_report" site/api-report.html; fi
 
       - name: Build the dashboard
-        env:
-          GITHUB_REPOSITORY: ${{ github.repository }}
+        # Artifacts were copied next to the page, so links are relative to it.
+        # Report links are added only for reports this run actually produced.
         run: |
-          python -m utils.dashboard \
-            --history reports/history \
-            --out site/index.html \
-            --max-runs 200 \
-            --link "UI report=report.html" \
-            --link "API report=api-report.html"
-          # keep the store bounded: newest 400 shard files (~200 runs of two jobs)
+          links=()
+          if [ -f site/report.html ]; then links+=(--link "UI report=report.html"); fi
+          if [ -f site/api-report.html ]; then links+=(--link "API report=api-report.html"); fi
+          python -m utils.dashboard             --history reports/history             --out site/index.html             --max-runs 200             --artifact-base .             "${links[@]}"
+          # Keep the store bounded: the newest 400 shard files (~200 runs of
+          # two jobs). File names start with the run's UTC timestamp, so a
+          # name sort is a time sort; mtimes here are all "now".
           mkdir -p site/history
-          rm -f site/history/*.json
-          ls -t reports/history/*.json | head -n 400 | xargs -I{} cp {} site/history/
+          ls reports/history/*.json 2>/dev/null | sort -r | head -n 400 | xargs -I{} cp {} site/history/
           touch site/.nojekyll
 
       - name: Publish to gh-pages
