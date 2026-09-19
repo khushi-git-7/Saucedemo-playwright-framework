@@ -141,13 +141,20 @@ def render_overview(runs: list, flaky_rows: list) -> str:
     wall_delta = delta_of("wall_seconds")
     total_delta = delta_of("total")
 
+    def delta_text(change, unit: str = "", digits: int = 1, scale: float = 1.0) -> str:
+        if previous is None:
+            return "first run"
+        if change is None:  # one of the two runs has no value, e.g. every test skipped
+            return "no previous value to compare"
+        return signed(change * scale, unit, digits) + " vs previous run"
+
     tiles = [
-        kpi_tile("Pass rate", fmt_pct(latest["pass_rate"]), (signed(pr_delta, " pts") + " vs previous run") if pr_delta is not None else "first run", delta_class(pr_delta, True), [s["pass_rate"] for s in stats], "passed / (passed + failed + error). Skipped tests are excluded from the denominator. Delta is against the previous run."),
-        kpi_tile("Total tests", str(latest["total"]), (signed(total_delta, "", 0) + " vs previous run") if total_delta is not None else "first run", delta_class(total_delta, None), [s["total"] for s in stats], "Number of test cases in the latest run, including skipped ones."),
-        kpi_tile("Failed", str(failed_now), (signed(failed_delta, "", 0) + " vs previous run") if failed_delta is not None else "first run", delta_class(failed_delta, False), failed_series, "Tests whose outcome was failed (assertion in the test body) or error (setup / teardown)."),
+        kpi_tile("Pass rate", fmt_pct(latest["pass_rate"]), delta_text(pr_delta, " pts"), delta_class(pr_delta, True), [s["pass_rate"] for s in stats], "passed / (passed + failed + error). Skipped tests are excluded from the denominator. Delta is against the previous run."),
+        kpi_tile("Total tests", str(latest["total"]), delta_text(total_delta, "", 0), delta_class(total_delta, None), [s["total"] for s in stats], "Number of test cases in the latest run, including skipped ones."),
+        kpi_tile("Failed", str(failed_now), delta_text(failed_delta, "", 0), delta_class(failed_delta, False), failed_series, "Tests whose outcome was failed (assertion in the test body) or error (setup / teardown)."),
         kpi_tile("Flaky tests", str(flaky_count), f"{len(flaky_rows)} changed outcome at least once" if flaky_rows else "no outcome changes in window", "neutral", [], f"Tests whose outcome flipped between pass and fail at least {metrics.FLAKY_MIN_FLIPS} times within the last {metrics.FLAKY_WINDOW} runs they appeared in."),
-        kpi_tile("Median test duration", fmt_seconds(latest["median_duration"]), (signed((med_delta or 0) * 1000, " ms", 0) + " vs previous run") if med_delta is not None else "first run", delta_class(med_delta, False), [s["median_duration"] for s in stats], "Median of setup + call + teardown time per test in the latest run."),
-        kpi_tile("Suite time", fmt_seconds(latest["wall_seconds"]), (signed(wall_delta, " s") + " vs previous run") if wall_delta is not None else "first run", delta_class(wall_delta, False), [s["wall_seconds"] for s in stats], "Wall-clock time of the pytest session. For a run merged from parallel CI jobs it is the longest job."),
+        kpi_tile("Median test duration", fmt_seconds(latest["median_duration"]), delta_text(med_delta, " ms", 0, scale=1000), delta_class(med_delta, False), [s["median_duration"] for s in stats], "Median of setup + call + teardown time per test in the latest run."),
+        kpi_tile("Suite time", fmt_seconds(latest["wall_seconds"]), delta_text(wall_delta, " s"), delta_class(wall_delta, False), [s["wall_seconds"] for s in stats], "Wall-clock time of the pytest session. For a run merged from parallel CI jobs it is the longest job."),
     ]
     return '<div class="tiles">' + "".join(tiles) + "</div>"
 
@@ -272,17 +279,39 @@ def render_flakiness(runs: list, flaky_rows: list) -> str:
     )
 
 
-def render_failures(runs: list, artifact_base: str) -> str:
+def render_failures(runs: list, artifact_base: str, artifact_root=None) -> str:
+    """Failure cards for the latest run.
+
+    Artifact links are ``artifact_base/<repo-relative path>``. When
+    *artifact_root* is given, only files that exist under it are linked; the
+    rest are named in plain text with a link to the CI run they were uploaded
+    to, so a page published without its artifacts (GitHub Pages) never shows
+    a dead link.
+    """
     latest = runs[-1]
     failed = metrics.failures(latest)
     if not failed:
         return f'<div class="card"><p class="empty">No failures in the latest run ({fmt_ts(latest["timestamp"])}).</p></div>'
     base = artifact_base.rstrip("/") + "/" if artifact_base else ""
+    ci_url = (latest.get("ci") or {}).get("url") or ""
     cards = []
     for test in failed:
-        links = "".join(
-            f'<a class="alink" href="{esc(base + path)}">{esc(artifact_kind(path))}</a>' for path in test.get("artifacts", [])
-        )
+        available, missing = [], []
+        for path in test.get("artifacts", []):
+            if artifact_root is None or (artifact_root / path).is_file():
+                available.append(path)
+            else:
+                missing.append(path)
+        parts = [f'<a class="alink" href="{esc(base + path)}">{esc(artifact_kind(path))}</a>' for path in available]
+        if missing:
+            note = ", ".join(artifact_kind(path) for path in missing) + " not published with this page"
+            if ci_url:
+                note += f' - <a href="{esc(ci_url)}">download from the CI run</a>'
+            parts.append(f'<span class="muted">{note}</span>')
+        if parts:
+            links_html = '<div class="fail-links">Artifacts: ' + " ".join(parts) + "</div>"
+        else:
+            links_html = '<div class="fail-links muted">No artifacts captured for this test.</div>'
         details = test.get("details") or ""
         detail_html = f'<details class="trace"><summary>Traceback</summary><pre>{esc(details)}</pre></details>' if details else ""
         cards.append(
@@ -290,8 +319,7 @@ def render_failures(runs: list, artifact_base: str) -> str:
             f'<div class="fail-head">{outcome_chip(test["outcome"])}<div><div class="tname">{esc(short_name(test["nodeid"]))}</div><div class="tmod">{esc(module_of(test["nodeid"]))}</div></div>'
             f'<div class="fail-meta">{chip("phase: " + str(test.get("phase") or "call"))}{chip(fmt_seconds(test.get("duration")))}{"".join(chip(m, "layer") for m in test.get("markers", []))}</div></div>'
             f'<div class="fail-msg">{esc(test.get("message") or "(no message)")}</div>'
-            f'{("<div class=\"fail-links\">Artifacts: " + links + "</div>") if links else "<div class=\"fail-links muted\">No artifacts captured (artifacts are kept for the latest deployed run only).</div>"}'
-            f"{detail_html}</div>"
+            f"{links_html}{detail_html}</div>"
         )
     return f'<div class="card"><div class="card-head"><h3>{len(failed)} failing in the latest run</h3><span class="muted">{esc(fmt_ts(latest["timestamp"]))}</span></div>' + "".join(cards) + "</div>"
 
@@ -344,8 +372,9 @@ def run_data(runs: list) -> str:
                 ],
             }
         )
-    # "</" must not appear inside a script element.
-    return json.dumps(data, separators=(",", ":")).replace("</", "<\\/")
+    # A "<" inside a script element could start "</script>" or "<!--", so it
+    # is written as the JSON escape <, which JSON.parse turns back.
+    return json.dumps(data, separators=(",", ":")).replace("<", "\\u003c")
 
 
 # ---------------------------------------------------------------------------
@@ -588,7 +617,8 @@ def page(body: str, repo_url: str, links: list, meta: str, runs: list) -> str:
     )
 
 
-def render_dashboard(runs: list, repo_url: str = "", links: list = None, artifact_base: str = "") -> str:
+def render_dashboard(runs: list, repo_url: str = "", links: list = None, artifact_base: str = "", artifact_root=None) -> str:
+    """The complete page. See render_failures for artifact_base / artifact_root."""
     links = links or []
     if not runs:
         return render_empty(repo_url, links)
@@ -616,7 +646,7 @@ def render_dashboard(runs: list, repo_url: str = "", links: list = None, artifac
             section("trends", "Trends", "how the suite moves run over run", render_trends(runs)),
             section("breakdown", "Breakdown", "where the latest run passed and where time goes", render_breakdown(runs)),
             section("flakiness", "Flakiness", "tests whose outcome changes without the code changing", render_flakiness(runs, flaky_rows)),
-            section("failures", "Failures", "what failed in the latest run and the evidence captured", render_failures(runs, artifact_base)),
+            section("failures", "Failures", "what failed in the latest run and the evidence captured", render_failures(runs, artifact_base, artifact_root)),
             section("runs", "Runs", "every recorded run; click one for its tests", render_runs(runs, repo_url)),
         ]
     )

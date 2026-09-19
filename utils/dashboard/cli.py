@@ -35,7 +35,18 @@ def _default_artifact_base(out: Path) -> str:
     return "" if rel == "." else rel.replace("\\", "/")
 
 
+def _artifact_root(out: Path, base: str):
+    """Folder the artifact links resolve against, or None for a remote base."""
+    if "://" in base:
+        return None
+    return out.parent / base if base else out.parent
+
+
 def parse_links(values: list, out: Path) -> list:
+    """``--link`` values (``LABEL=HREF`` or a bare HREF) as (label, href) pairs.
+
+    Without any, the HTML report next to the dashboard is linked when present.
+    """
     links = []
     for value in values or []:
         label, _, href = value.partition("=")
@@ -50,22 +61,30 @@ def parse_links(values: list, out: Path) -> list:
 
 
 def build(history: Path, out: Path, max_runs: int = 0, repo_url: str = "", links: list = None, artifact_base: str = None) -> dict:
+    """Renders the history folder to *out* and returns a small summary dict.
+
+    *artifact_base* is the href prefix for failure artifacts, relative to the
+    page; None means "the repo root, relative to out" and "." means "next to
+    the page". Files that are not found under that base are not linked.
+    """
     runs = load_runs(history, max_runs=max_runs)
     base = _default_artifact_base(out) if artifact_base is None else artifact_base
-    html_text = render_dashboard(runs, repo_url=repo_url or _repo_url(), links=links or [], artifact_base=base)
+    base = "" if base in (".", "./") else base
+    html_text = render_dashboard(runs, repo_url=repo_url or _repo_url(), links=links or [], artifact_base=base, artifact_root=_artifact_root(out, base))
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(html_text, encoding="utf-8")
     return {"runs": len(runs), "bytes": len(html_text.encode("utf-8")), "out": str(out)}
 
 
 def main(argv: list = None) -> int:
+    """Command line entry point; returns the process exit code."""
     parser = argparse.ArgumentParser(prog="python -m utils.dashboard", description="Build the TestVerse results dashboard from recorded runs.")
     parser.add_argument("--history", default=str(Config.REPORTS_DIR / "history"), help="folder with run JSON files (default: reports/history)")
     parser.add_argument("--out", default=str(Config.REPORTS_DIR / "dashboard.html"), help="output HTML file (default: reports/dashboard.html)")
     parser.add_argument("--max-runs", type=int, default=200, help="keep only the newest N runs (default: 200, 0 = all)")
     parser.add_argument("--repo-url", default="", help="repository URL used for commit links (default: from GITHUB_REPOSITORY or the project repo)")
     parser.add_argument("--link", action="append", default=[], metavar="LABEL=HREF", help="extra sidebar link, e.g. 'UI report=report.html' (repeatable)")
-    parser.add_argument("--artifact-base", default=None, help="prefix for artifact links (default: relative path from --out to the repo root)")
+    parser.add_argument("--artifact-base", default=None, help="prefix for artifact links, '.' for files next to the page (default: relative path from --out to the repo root)")
     args = parser.parse_args(argv)
 
     history = Path(args.history)

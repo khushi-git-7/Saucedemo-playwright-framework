@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
+from html.parser import HTMLParser
 
 from utils.results_plugin import classify_area
 
@@ -70,3 +71,55 @@ def run_sequence(outcomes_by_test: dict, durations: dict = None) -> list:
             tests.append(make_record(nodeid, letters[pattern[index]], duration))
         runs.append(shard(f"run-{index:02d}", tests, index=index))
     return runs
+
+
+class TagBalanceChecker(HTMLParser):
+    """Parses HTML with the standard library and records unbalanced tags.
+
+    Used to assert that every rendered page is well formed: each opened
+    element is closed, in order, and nothing is left open at the end.
+    """
+
+    VOID = {"area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "source", "track", "wbr"}
+
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.stack = []
+        self.problems = []
+        self.text = []
+        self.tags = set()
+        self.attributes = set()
+
+    def handle_starttag(self, tag, attrs):
+        self.tags.add(tag)
+        self.attributes.update(name for name, _ in attrs)
+        if tag not in self.VOID:
+            self.stack.append(tag)
+
+    def handle_startendtag(self, tag, attrs):
+        self.tags.add(tag)  # <x/> self-closing, as in inline SVG
+        self.attributes.update(name for name, _ in attrs)
+
+    def handle_endtag(self, tag):
+        if tag in self.VOID:
+            return
+        if not self.stack or self.stack[-1] != tag:
+            self.problems.append(f"unexpected </{tag}> (open: {self.stack[-3:]})")
+            return
+        self.stack.pop()
+
+    def handle_data(self, data):
+        self.text.append(data)
+
+    def close(self):
+        super().close()
+        if self.stack:
+            self.problems.append(f"unclosed: {self.stack}")
+
+
+def check_html(text: str) -> TagBalanceChecker:
+    """Returns the parser after a full parse; ``problems`` is empty when well formed."""
+    parser = TagBalanceChecker()
+    parser.feed(text)
+    parser.close()
+    return parser
