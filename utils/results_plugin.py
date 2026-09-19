@@ -11,6 +11,11 @@ How it works
   ``tests/conftest.py`` (``item._artifacts``) to the report's
   ``user_properties``. That list is part of the report that xdist serialises
   back to the controller, so nothing is lost across processes.
+* Outcomes: ``passed``, ``failed`` (the test body raised), ``error`` (setup or
+  teardown raised) and ``skipped``. An expected failure (``xfail``) is
+  recorded as skipped and an unexpected pass as passed, which is how pytest
+  itself reports them. When several phases fail, the first one is kept: it is
+  the root cause, and a teardown error after a setup error adds nothing.
 * ``ResultsRecorder`` is registered only in the controlling process (the one
   without ``workerinput``). Under ``pytest -n``, xdist forwards every worker's
   ``pytest_runtest_logreport`` call to the controller, so the controller sees
@@ -30,7 +35,8 @@ Switches
 ``TESTVERSE_SUITE``          label for this invocation (default derived from
                              the paths given on the command line: ui, api, full).
 
-Nothing is written for ``--collect-only`` or for a session that ran no tests.
+Nothing is written for ``--collect-only``, for a session that ran no tests, or
+for a session that was interrupted (Ctrl-C): a partial run is not a result.
 """
 
 from __future__ import annotations
@@ -56,6 +62,10 @@ DISABLED_KEY = pytest.StashKey[bool]()
 RUN_FILE_KEY = pytest.StashKey[str]()
 
 _TRUTHY = {"1", "true", "yes", "on", "y"}
+
+# pytest's own marks carry no suite semantics; only user markers such as
+# smoke / regression / ui / api are worth grouping by in the dashboard.
+_BUILTIN_MARKS = {"parametrize", "usefixtures", "filterwarnings", "skip", "skipif", "xfail"}
 
 
 # ---------------------------------------------------------------------------
@@ -127,9 +137,10 @@ def relative_to_root(path: str) -> str:
 
 
 def _marker_names(item) -> list:
+    """The item's user markers (closest first), without pytest's built-ins."""
     names = []
     for marker in item.iter_markers():
-        if marker.name not in names:
+        if marker.name not in names and marker.name not in _BUILTIN_MARKS:
             names.append(marker.name)
     return names
 
@@ -280,11 +291,10 @@ class ResultsRecorder:
             record["call_duration"] = float(report.duration)
 
         if report.failed:
-            outcome = "failed" if report.when == "call" else "error"
-            # A failure always wins over an earlier passed/skipped phase, and a
-            # test-body failure is more informative than a teardown error.
-            if record["outcome"] != "failed" or outcome == "failed":
-                record["outcome"] = outcome
+            # Phases arrive in order (setup, call, teardown), so the first
+            # failure seen is the root cause; later ones are consequences.
+            if record["outcome"] not in ("failed", "error"):
+                record["outcome"] = "failed" if report.when == "call" else "error"
                 record["phase"] = report.when
                 record["message"] = failure_message(report)
                 record["details"] = failure_details(report)
@@ -335,7 +345,7 @@ class ResultsRecorder:
         }
 
     def pytest_sessionfinish(self, session, exitstatus):
-        if not self.enabled():
+        if not self.enabled() or exitstatus == pytest.ExitCode.INTERRUPTED:
             return
         try:
             directory = history_dir()
