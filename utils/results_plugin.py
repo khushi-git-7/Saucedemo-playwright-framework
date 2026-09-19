@@ -81,6 +81,7 @@ def _env(name: str, default: str = "") -> str:
 
 
 def history_dir() -> Path:
+    """Where run files are written: TESTVERSE_HISTORY_DIR or reports/history."""
     custom = _env("TESTVERSE_HISTORY_DIR")
     return Path(custom) if custom else Config.REPORTS_DIR / "history"
 
@@ -112,6 +113,7 @@ def git_info() -> dict:
 
 
 def ci_info() -> dict:
+    """GitHub Actions run metadata, or {"provider": None} outside CI."""
     if not _env("GITHUB_ACTIONS"):
         return {"provider": None}
     server = _env("GITHUB_SERVER_URL", "https://github.com")
@@ -163,6 +165,7 @@ def failure_message(report) -> str:
 
 
 def failure_details(report, limit: int = 3000) -> str:
+    """The full failure text (traceback), truncated to *limit* characters."""
     text = getattr(report, "longreprtext", "") or ""
     if len(text) > limit:
         text = text[: limit - 1] + "..."
@@ -170,6 +173,7 @@ def failure_details(report, limit: int = 3000) -> str:
 
 
 def classify_layer(nodeid: str, markers: list) -> str:
+    """api / ui from the markers, else from the top-level folder; other otherwise."""
     if "api" in markers:
         return "api"
     if "ui" in markers:
@@ -191,6 +195,7 @@ def classify_area(nodeid: str) -> str:
 
 
 def suite_label(config) -> str:
+    """TESTVERSE_SUITE, or ui / api / full from the paths pytest was given."""
     custom = _env("TESTVERSE_SUITE")
     if custom:
         return custom

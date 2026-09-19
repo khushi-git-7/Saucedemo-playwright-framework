@@ -23,10 +23,12 @@ SPARK_POINTS = 12
 # formatting helpers
 # ---------------------------------------------------------------------------
 def esc(value) -> str:
+    """HTML-escapes any value for use in text or attributes."""
     return html.escape("" if value is None else str(value), quote=True)
 
 
 def fmt_seconds(value) -> str:
+    """Human duration: 250 ms, 1.25 s, 12.3 s, 2m 05s; n/a for None."""
     if value is None:
         return "n/a"
     value = float(value)
@@ -68,6 +70,7 @@ def module_of(nodeid: str) -> str:
 
 
 def signed(value: float, unit: str = "", digits: int = 1) -> str:
+    """Delta with an explicit sign, e.g. +2.5 pts; zero renders as 0."""
     if value is None:
         return ""
     text = f"{value:+.{digits}f}".rstrip("0").rstrip(".") if digits else f"{int(round(value)):+d}"
@@ -77,6 +80,7 @@ def signed(value: float, unit: str = "", digits: int = 1) -> str:
 
 
 def artifact_kind(path: str) -> str:
+    """screenshot / trace / video / file, from the artifact's extension."""
     lower = path.lower()
     if lower.endswith((".png", ".jpg", ".jpeg")):
         return "screenshot"
@@ -96,10 +100,12 @@ def outcome_chip(outcome: str) -> str:
 
 
 def info(rule: str) -> str:
+    """A small ? badge that shows *rule* in the tooltip."""
     return f'<span class="info" tabindex="0" data-tip="{charts.tip_attr("How this is computed", [["", rule]])}" aria-label="{esc(rule)}">?</span>'
 
 
 def table_view(headers: list, rows: list, summary: str = "Table view") -> str:
+    """Collapsed table with the numbers behind a chart."""
     head = "".join(f"<th>{esc(h)}</th>" for h in headers)
     body = "".join("<tr>" + "".join(f"<td>{esc(c)}</td>" for c in row) + "</tr>" for row in rows)
     return f'<details class="tbl"><summary>{esc(summary)}</summary><table><thead><tr>{head}</tr></thead><tbody>{body}</tbody></table></details>'
@@ -119,6 +125,7 @@ def kpi_tile(label: str, value: str, delta_text: str, delta_class: str, spark_va
 
 
 def render_overview(runs: list, flaky_rows: list) -> str:
+    """KPI tiles for the latest run with deltas and sparklines."""
     stats = [metrics.run_stats(r) for r in runs]
     latest = stats[-1]
     previous = stats[-2] if len(stats) > 1 else None
@@ -160,6 +167,7 @@ def render_overview(runs: list, flaky_rows: list) -> str:
 
 
 def render_insights(insights: list) -> str:
+    """The insight list; each item shows its rule on hover."""
     items = []
     for item in insights:
         items.append(
@@ -170,6 +178,7 @@ def render_insights(insights: list) -> str:
 
 
 def render_trends(runs: list) -> str:
+    """Pass rate, suite time and outcome charts over runs, each with a table view."""
     stats = [metrics.run_stats(r) for r in runs]
     labels = [fmt_ts(s["timestamp"], "short") for s in stats]
 
@@ -222,6 +231,7 @@ def _hbar_rows(rows: list) -> list:
 
 
 def render_breakdown(runs: list) -> str:
+    """Pass rate by marker and by area for the latest run, plus the slowest tests."""
     latest = runs[-1]
     by_marker = metrics.breakdown(latest, "markers", MARKER_ORDER)
     by_area = metrics.breakdown(latest, "area")
@@ -248,6 +258,7 @@ def render_breakdown(runs: list) -> str:
 
 
 def render_flakiness(runs: list, flaky_rows: list) -> str:
+    """Outcome timeline of every test that changed outcome in the window."""
     window_runs = runs[-metrics.FLAKY_WINDOW:]
     first_index = len(runs) - len(window_runs)
     run_labels = [f"Run #{first_index + i + 1} - {fmt_ts(r['timestamp'])}" for i, r in enumerate(window_runs)]
@@ -325,6 +336,7 @@ def render_failures(runs: list, artifact_base: str, artifact_root=None) -> str:
 
 
 def render_runs(runs: list, repo_url: str) -> str:
+    """The run table, newest first, with a drill-down row per run."""
     rows = []
     for i, run in enumerate(reversed(runs)):
         index = len(runs) - i
@@ -585,6 +597,7 @@ NAV = [
 
 
 def render_empty(repo_url: str, links: list) -> str:
+    """The page shown when the history folder has no run files."""
     body = (
         '<section id="overview"><h2>Overview</h2><div class="card"><p class="empty">No run history found. '
         "Run <code>python -m pytest</code> once (it writes reports/history/&lt;run&gt;.json) and rebuild with "
@@ -594,6 +607,7 @@ def render_empty(repo_url: str, links: list) -> str:
 
 
 def page(body: str, repo_url: str, links: list, meta: str, runs: list) -> str:
+    """Wraps rendered sections in the document shell: sidebar, styles, script."""
     nav = "".join(f'<a href="#{key}"><span class="k"></span>{label}</a>' for key, label in NAV)
     link_html = "".join(f'<a href="{esc(href)}">{esc(label)}</a>' for label, href in links)
     built = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")

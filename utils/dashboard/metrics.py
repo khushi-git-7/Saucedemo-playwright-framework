@@ -40,6 +40,7 @@ def percentile(values, p: float):
 
 
 def pass_rate(summary: dict):
+    """Percentage of executed tests that passed; None when nothing executed."""
     executed = summary.get("passed", 0) + summary.get("failed", 0) + summary.get("error", 0)
     if executed == 0:
         return None
@@ -58,6 +59,7 @@ def _is_fail(outcome: str) -> bool:
 # per-run summaries
 # ---------------------------------------------------------------------------
 def run_stats(run: dict) -> dict:
+    """Counts, pass rate, duration percentiles and wall time of one run."""
     tests = run.get("tests", [])
     summary = run.get("summary") or {}
     durations = [float(t.get("duration") or 0.0) for t in tests]
