@@ -1,0 +1,278 @@
+{
+ "schema": 1,
+ "run_id": "20260919T133131Z-2346",
+ "run_group": "35446010180",
+ "suite": "api",
+ "timestamp": "2026-09-19T13:31:31+00:00",
+ "wall_seconds": 1.225,
+ "exit_status": 0,
+ "git": {
+  "sha": "78703c9f50868438d68933a9799764dfca6ced91",
+  "branch": "main"
+ },
+ "ci": {
+  "provider": "github",
+  "run_id": "35446010180",
+  "run_number": "6",
+  "run_attempt": "1",
+  "event": "push",
+  "url": "https://github.com/khushi-git-7/Saucedemo-playwright-framework/actions/runs/35446010180"
+ },
+ "browser": "chromium",
+ "headless": true,
+ "workers": 4,
+ "python": "3.12.14",
+ "platform": "linux",
+ "pytest": "9.0.3",
+ "config": {
+  "base_url": "https://www.saucedemo.com/",
+  "api_base_url": "https://jsonplaceholder.typicode.com",
+  "browser": "chromium",
+  "headless": true,
+  "slow_mo_ms": 0,
+  "timeout_ms": 15000,
+  "trace": "retain-on-failure",
+  "video": "retain-on-failure",
+  "screenshot": "retain-on-failure"
+ },
+ "summary": {
+  "total": 12,
+  "passed": 12,
+  "failed": 0,
+  "error": 0,
+  "skipped": 0
+ },
+ "tests": [
+  {
+   "nodeid": "api/test_posts_api.py::test_get_post_returns_200",
+   "name": "test_get_post_returns_200",
+   "module": "api/test_posts_api.py",
+   "area": "posts",
+   "layer": "api",
+   "markers": [
+    "regression",
+    "smoke",
+    "api"
+   ],
+   "outcome": "passed",
+   "phase": null,
+   "duration": 0.055836040999992065,
+   "call_duration": 0.054711691999997925,
+   "message": "",
+   "details": "",
+   "artifacts": [],
+   "worker": "gw0"
+  },
+  {
+   "nodeid": "api/test_posts_api.py::test_unknown_endpoint_returns_404",
+   "name": "test_unknown_endpoint_returns_404",
+   "module": "api/test_posts_api.py",
+   "area": "posts",
+   "layer": "api",
+   "markers": [
+    "regression",
+    "api"
+   ],
+   "outcome": "passed",
+   "phase": null,
+   "duration": 0.2589757289999852,
+   "call_duration": 0.25795300999999426,
+   "message": "",
+   "details": "",
+   "artifacts": [],
+   "worker": "gw3"
+  },
+  {
+   "nodeid": "api/test_posts_api.py::test_create_post_returns_201",
+   "name": "test_create_post_returns_201",
+   "module": "api/test_posts_api.py",
+   "area": "posts",
+   "layer": "api",
+   "markers": [
+    "regression",
+    "api"
+   ],
+   "outcome": "passed",
+   "phase": null,
+   "duration": 0.24637529600001074,
+   "call_duration": 0.2452587110000053,
+   "message": "",
+   "details": "",
+   "artifacts": [],
+   "worker": "gw2"
+  },
+  {
+   "nodeid": "api/test_posts_api.py::test_list_posts_matches_collection_schema",
+   "name": "test_list_posts_matches_collection_schema",
+   "module": "api/test_posts_api.py",
+   "area": "posts",
+   "layer": "api",
+   "markers": [
+    "regression",
+    "api"
+   ],
+   "outcome": "passed",
+   "phase": null,
+   "duration": 0.06855367499998977,
+   "call_duration": 0.06731409100000008,
+   "message": "",
+   "details": "",
+   "artifacts": [],
+   "worker": "gw1"
+  },
+  {
+   "nodeid": "api/test_posts_api.py::test_get_post_matches_schema",
+   "name": "test_get_post_matches_schema",
+   "module": "api/test_posts_api.py",
+   "area": "posts",
+   "layer": "api",
+   "markers": [
+    "regression",
+    "smoke",
+    "api"
+   ],
+   "outcome": "passed",
+   "phase": null,
+   "duration": 0.015111343999990368,
+   "call_duration": 0.0146727449999986,
+   "message": "",
+   "details": "",
+   "artifacts": [],
+   "worker": "gw0"
+  },
+  {
+   "nodeid": "api/test_posts_api.py::test_get_post_responds_within_sla",
+   "name": "test_get_post_responds_within_sla",
+   "module": "api/test_posts_api.py",
+   "area": "posts",
+   "layer": "api",
+   "markers": [
+    "regression",
+    "api"
+   ],
+   "outcome": "passed",
+   "phase": null,
+   "duration": 0.009284415000010426,
+   "call_duration": 0.008742944000005082,
+   "message": "",
+   "details": "",
+   "artifacts": [],
+   "worker": "gw1"
+  },
+  {
+   "nodeid": "api/test_users_api.py::test_every_user_has_a_valid_email[1]",
+   "name": "test_every_user_has_a_valid_email[1]",
+   "module": "api/test_users_api.py",
+   "area": "users",
+   "layer": "api",
+   "markers": [
+    "regression",
+    "api"
+   ],
+   "outcome": "passed",
+   "phase": null,
+   "duration": 0.014140842999992742,
+   "call_duration": 0.013556460999993192,
+   "message": "",
+   "details": "",
+   "artifacts": [],
+   "worker": "gw0"
+  },
+  {
+   "nodeid": "api/test_users_api.py::test_every_user_has_a_valid_email[2]",
+   "name": "test_every_user_has_a_valid_email[2]",
+   "module": "api/test_users_api.py",
+   "area": "users",
+   "layer": "api",
+   "markers": [
+    "regression",
+    "api"
+   ],
+   "outcome": "passed",
+   "phase": null,
+   "duration": 0.013968370000000618,
+   "call_duration": 0.013482494000001566,
+   "message": "",
+   "details": "",
+   "artifacts": [],
+   "worker": "gw1"
+  },
+  {
+   "nodeid": "api/test_users_api.py::test_every_user_has_a_valid_email[3]",
+   "name": "test_every_user_has_a_valid_email[3]",
+   "module": "api/test_users_api.py",
+   "area": "users",
+   "layer": "api",
+   "markers": [
+    "regression",
+    "api"
+   ],
+   "outcome": "passed",
+   "phase": null,
+   "duration": 0.0175318630000163,
+   "call_duration": 0.015749014000007833,
+   "message": "",
+   "details": "",
+   "artifacts": [],
+   "worker": "gw0"
+  },
+  {
+   "nodeid": "api/test_users_api.py::test_filter_posts_by_user_returns_only_that_user",
+   "name": "test_filter_posts_by_user_returns_only_that_user",
+   "module": "api/test_users_api.py",
+   "area": "users",
+   "layer": "api",
+   "markers": [
+    "regression",
+    "api"
+   ],
+   "outcome": "passed",
+   "phase": null,
+   "duration": 0.015161407999997323,
+   "call_duration": 0.013104065999996806,
+   "message": "",
+   "details": "",
+   "artifacts": [],
+   "worker": "gw1"
+  },
+  {
+   "nodeid": "api/test_posts_api.py::test_get_unknown_post_returns_404",
+   "name": "test_get_unknown_post_returns_404",
+   "module": "api/test_posts_api.py",
+   "area": "posts",
+   "layer": "api",
+   "markers": [
+    "regression",
+    "api"
+   ],
+   "outcome": "passed",
+   "phase": null,
+   "duration": 0.015969728000015948,
+   "call_duration": 0.01449555500001054,
+   "message": "",
+   "details": "",
+   "artifacts": [],
+   "worker": "gw2"
+  },
+  {
+   "nodeid": "api/test_users_api.py::test_get_user_returns_200_and_matches_schema",
+   "name": "test_get_user_returns_200_and_matches_schema",
+   "module": "api/test_users_api.py",
+   "area": "users",
+   "layer": "api",
+   "markers": [
+    "regression",
+    "smoke",
+    "api"
+   ],
+   "outcome": "passed",
+   "phase": null,
+   "duration": 0.021083895999993274,
+   "call_duration": 0.019333507999988342,
+   "message": "",
+   "details": "",
+   "artifacts": [],
+   "worker": "gw3"
+  }
+ ]
+}

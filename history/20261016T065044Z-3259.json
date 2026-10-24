@@ -1,0 +1,361 @@
+{
+ "schema": 1,
+ "run_id": "20261016T065044Z-3259",
+ "run_group": "38863478868",
+ "suite": "ui",
+ "timestamp": "2026-10-16T06:50:44+00:00",
+ "wall_seconds": 22.636,
+ "exit_status": 0,
+ "git": {
+  "sha": "7050ef9a83d6a7a4e63e08f22876b6dc8d94e9df",
+  "branch": "main"
+ },
+ "ci": {
+  "provider": "github",
+  "run_id": "38863478868",
+  "run_number": "37",
+  "run_attempt": "1",
+  "event": "schedule",
+  "url": "https://github.com/khushi-git-7/Saucedemo-playwright-framework/actions/runs/38863478868"
+ },
+ "browser": "firefox",
+ "headless": true,
+ "workers": 4,
+ "python": "3.12.15",
+ "platform": "linux",
+ "pytest": "9.0.3",
+ "config": {
+  "base_url": "https://www.saucedemo.com/",
+  "api_base_url": "https://jsonplaceholder.typicode.com",
+  "browser": "firefox",
+  "headless": true,
+  "slow_mo_ms": 0,
+  "timeout_ms": 15000,
+  "trace": "retain-on-failure",
+  "video": "retain-on-failure",
+  "screenshot": "retain-on-failure"
+ },
+ "summary": {
+  "total": 16,
+  "passed": 16,
+  "failed": 0,
+  "error": 0,
+  "skipped": 0
+ },
+ "tests": [
+  {
+   "nodeid": "tests/test_cart.py::test_add_product_to_cart",
+   "name": "test_add_product_to_cart",
+   "module": "tests/test_cart.py",
+   "area": "cart",
+   "layer": "ui",
+   "markers": [
+    "regression",
+    "smoke",
+    "ui"
+   ],
+   "outcome": "passed",
+   "phase": null,
+   "duration": 7.097589350000021,
+   "call_duration": 1.9607864760000098,
+   "message": "",
+   "details": "",
+   "artifacts": [],
+   "worker": "gw0"
+  },
+  {
+   "nodeid": "tests/test_inventory.py::test_products_visible",
+   "name": "test_products_visible",
+   "module": "tests/test_inventory.py",
+   "area": "inventory",
+   "layer": "ui",
+   "markers": [
+    "regression",
+    "smoke",
+    "ui"
+   ],
+   "outcome": "passed",
+   "phase": null,
+   "duration": 9.355981171999986,
+   "call_duration": 2.5391393860000164,
+   "message": "",
+   "details": "",
+   "artifacts": [],
+   "worker": "gw3"
+  },
+  {
+   "nodeid": "tests/test_checkout.py::test_checkout_missing_details",
+   "name": "test_checkout_missing_details",
+   "module": "tests/test_checkout.py",
+   "area": "checkout",
+   "layer": "ui",
+   "markers": [
+    "regression",
+    "ui"
+   ],
+   "outcome": "passed",
+   "phase": null,
+   "duration": 10.183565182999985,
+   "call_duration": 3.0590191569999945,
+   "message": "",
+   "details": "",
+   "artifacts": [],
+   "worker": "gw2"
+  },
+  {
+   "nodeid": "tests/test_cart.py::test_cart_item_visible",
+   "name": "test_cart_item_visible",
+   "module": "tests/test_cart.py",
+   "area": "cart",
+   "layer": "ui",
+   "markers": [
+    "regression",
+    "ui"
+   ],
+   "outcome": "passed",
+   "phase": null,
+   "duration": 10.74190197499999,
+   "call_duration": 2.33031679299998,
+   "message": "",
+   "details": "",
+   "artifacts": [],
+   "worker": "gw1"
+  },
+  {
+   "nodeid": "tests/test_cart.py::test_remove_product_from_cart",
+   "name": "test_remove_product_from_cart",
+   "module": "tests/test_cart.py",
+   "area": "cart",
+   "layer": "ui",
+   "markers": [
+    "regression",
+    "ui"
+   ],
+   "outcome": "passed",
+   "phase": null,
+   "duration": 3.8894705720000218,
+   "call_duration": 1.2811074710000128,
+   "message": "",
+   "details": "",
+   "artifacts": [],
+   "worker": "gw0"
+  },
+  {
+   "nodeid": "tests/test_inventory.py::test_product_names_exist",
+   "name": "test_product_names_exist",
+   "module": "tests/test_inventory.py",
+   "area": "inventory",
+   "layer": "ui",
+   "markers": [
+    "regression",
+    "ui"
+   ],
+   "outcome": "passed",
+   "phase": null,
+   "duration": 3.9856467069999724,
+   "call_duration": 1.5503530129999774,
+   "message": "",
+   "details": "",
+   "artifacts": [],
+   "worker": "gw3"
+  },
+  {
+   "nodeid": "tests/test_checkout.py::test_order_confirmation_text",
+   "name": "test_order_confirmation_text",
+   "module": "tests/test_checkout.py",
+   "area": "checkout",
+   "layer": "ui",
+   "markers": [
+    "regression",
+    "e2e",
+    "ui"
+   ],
+   "outcome": "passed",
+   "phase": null,
+   "duration": 5.077835994000026,
+   "call_duration": 2.943860260000008,
+   "message": "",
+   "details": "",
+   "artifacts": [],
+   "worker": "gw2"
+  },
+  {
+   "nodeid": "tests/test_checkout.py::test_complete_checkout",
+   "name": "test_complete_checkout",
+   "module": "tests/test_checkout.py",
+   "area": "checkout",
+   "layer": "ui",
+   "markers": [
+    "regression",
+    "smoke",
+    "e2e",
+    "ui"
+   ],
+   "outcome": "passed",
+   "phase": null,
+   "duration": 5.364182710000023,
+   "call_duration": 2.840436643000004,
+   "message": "",
+   "details": "",
+   "artifacts": [],
+   "worker": "gw1"
+  },
+  {
+   "nodeid": "tests/test_inventory.py::test_product_prices_exist",
+   "name": "test_product_prices_exist",
+   "module": "tests/test_inventory.py",
+   "area": "inventory",
+   "layer": "ui",
+   "markers": [
+    "regression",
+    "ui"
+   ],
+   "outcome": "passed",
+   "phase": null,
+   "duration": 4.4595672310000225,
+   "call_duration": 1.432082820000005,
+   "message": "",
+   "details": "",
+   "artifacts": [],
+   "worker": "gw0"
+  },
+  {
+   "nodeid": "tests/test_inventory.py::test_sort_price_low_to_high",
+   "name": "test_sort_price_low_to_high",
+   "module": "tests/test_inventory.py",
+   "area": "inventory",
+   "layer": "ui",
+   "markers": [
+    "regression",
+    "ui"
+   ],
+   "outcome": "passed",
+   "phase": null,
+   "duration": 3.6078559690000134,
+   "call_duration": 0.8687733790000038,
+   "message": "",
+   "details": "",
+   "artifacts": [],
+   "worker": "gw3"
+  },
+  {
+   "nodeid": "tests/test_inventory.py::test_sort_price_high_to_low",
+   "name": "test_sort_price_high_to_low",
+   "module": "tests/test_inventory.py",
+   "area": "inventory",
+   "layer": "ui",
+   "markers": [
+    "regression",
+    "ui"
+   ],
+   "outcome": "passed",
+   "phase": null,
+   "duration": 3.8733452799999952,
+   "call_duration": 1.4295532440000045,
+   "message": "",
+   "details": "",
+   "artifacts": [],
+   "worker": "gw2"
+  },
+  {
+   "nodeid": "tests/test_login.py::test_login[wrong_password]",
+   "name": "test_login[wrong_password]",
+   "module": "tests/test_login.py",
+   "area": "login",
+   "layer": "ui",
+   "markers": [
+    "regression",
+    "smoke",
+    "ui"
+   ],
+   "outcome": "passed",
+   "phase": null,
+   "duration": 3.463064476999989,
+   "call_duration": 1.0227875390000065,
+   "message": "",
+   "details": "",
+   "artifacts": [],
+   "worker": "gw0"
+  },
+  {
+   "nodeid": "tests/test_login.py::test_login[valid_credentials]",
+   "name": "test_login[valid_credentials]",
+   "module": "tests/test_login.py",
+   "area": "login",
+   "layer": "ui",
+   "markers": [
+    "regression",
+    "smoke",
+    "ui"
+   ],
+   "outcome": "passed",
+   "phase": null,
+   "duration": 4.819714671999975,
+   "call_duration": 1.0733055210000089,
+   "message": "",
+   "details": "",
+   "artifacts": [],
+   "worker": "gw1"
+  },
+  {
+   "nodeid": "tests/test_login.py::test_login[locked_out_user]",
+   "name": "test_login[locked_out_user]",
+   "module": "tests/test_login.py",
+   "area": "login",
+   "layer": "ui",
+   "markers": [
+    "regression",
+    "smoke",
+    "ui"
+   ],
+   "outcome": "passed",
+   "phase": null,
+   "duration": 4.45795236699999,
+   "call_duration": 0.47794508399999813,
+   "message": "",
+   "details": "",
+   "artifacts": [],
+   "worker": "gw3"
+  },
+  {
+   "nodeid": "tests/test_login.py::test_login[empty_password]",
+   "name": "test_login[empty_password]",
+   "module": "tests/test_login.py",
+   "area": "login",
+   "layer": "ui",
+   "markers": [
+    "regression",
+    "smoke",
+    "ui"
+   ],
+   "outcome": "passed",
+   "phase": null,
+   "duration": 2.8718034080000336,
+   "call_duration": 0.5274766600000191,
+   "message": "",
+   "details": "",
+   "artifacts": [],
+   "worker": "gw0"
+  },
+  {
+   "nodeid": "tests/test_login.py::test_login[empty_username]",
+   "name": "test_login[empty_username]",
+   "module": "tests/test_login.py",
+   "area": "login",
+   "layer": "ui",
+   "markers": [
+    "regression",
+    "smoke",
+    "ui"
+   ],
+   "outcome": "passed",
+   "phase": null,
+   "duration": 2.698820705000003,
+   "call_duration": 0.4112398940000048,
+   "message": "",
+   "details": "",
+   "artifacts": [],
+   "worker": "gw2"
+  }
+ ]
+}
