@@ -53,7 +53,13 @@ jobs:
 
   ui-tests:
     name: UI tests (${{ matrix.browser }})
-    runs-on: ubuntu-latest
+    # Pinned, not ubuntu-latest: that image rolled to Ubuntu 26.04 on 1 Nov 2026 and
+    # "playwright install" refuses it -
+    #   ERROR: Playwright does not support chromium on ubuntu26.04-x64
+    # so the nightly run failed at setup, before a single test. The API and dashboard
+    # jobs do not install browsers, which is why they stayed green. Move this forward
+    # when Playwright supports the newer image.
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     strategy:
       fail-fast: false
